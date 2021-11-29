@@ -1,0 +1,15 @@
+cluster_a:
+  name: a
+  head: http://localhost:8000
+  nodes:
+    - localhost:5000
+    - localhost:5001
+    - localhost:5002
+
+# cluster_b:
+#   name: b
+#   head: http://localhost:8003
+#   nodes:
+#     - localhost:5003
+#     - localhost:5004
+#     - localhost:5005
