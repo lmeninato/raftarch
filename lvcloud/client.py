@@ -1,3 +1,5 @@
+import logging
+
 import requests
 
 
@@ -24,10 +26,17 @@ def main():
                 print('Wrong command!')
                 continue
 
-            print(result)
+            if result.status_code == 200:
+                print(result.text)
+            elif result.status_code == 201:
+                print("Done!")
+            elif result.status_code == 404:
+                print(f"Key: {cmd[1]} not found!")
+            else:
+                print(f"Error looking up key: {cmd[1]}")
 
-
-        except EOFError:
+        except Exception as e:
+            logging.error("Encountered an error: %s", e)
             # running in background
             while True:
                 # just wait for commands to _g_kvstorage
