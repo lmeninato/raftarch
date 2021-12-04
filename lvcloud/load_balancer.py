@@ -22,10 +22,12 @@ class LoadBalancer(SyncObj):
     def pop(self, key):
         self.__data.pop(key, None)
 
-    # if @replicated -> then we guarantee strong consistentency?
+    # if @replicated -> then we guarantee strong consistentency
+    @replicated
     def get(self, key):
         return self.__data.get(key, None)
 
+    # TODO: Make it work
     def __onBecomeLeader(self):
+        update_leader("http://localhost:8000", self.selfNode.__address, [node.__address for node in self.otherNodes])
         super(LoadBalancer, self).__onBecomeLeader()
-        update_leader("localhost:8000", self.selfNode.__address, [node.__address for node in self.otherNodes])

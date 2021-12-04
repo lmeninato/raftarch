@@ -11,8 +11,8 @@ from lvcloud.load_balancer import LoadBalancer
 class GatewayRequestHandler(BaseHTTPRequestHandler):
     lb = None
 
-    def __init__(self, lb_leader):
-        self.lb = lb_leader
+    def __init__(self, leader_addr, others_addr):
+        self.set_leader(leader_addr, others_addr)
         # super().__init__(*args, **kwargs)
 
     def __call__(self, *args, **kwargs):
@@ -42,13 +42,16 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-type", "text/plain")
         self.end_headers()
 
+    def set_leader(self, leader_addr, others_addr):
+        self.lb = LoadBalancer(leader_addr, others_addr)
+
     def do_POST(self):
         args = urllib.parse.parse_qs(self.path[2:])
         logging.info("Gateway received request with args: %s", args)
 
         if "type" in args.keys():
             logging.info("Setting leader lb to: %s", args.get("self_address"))
-            self.lb = LoadBalancer(args.get("self_address"), args.get("partner_addresses"))
+            self.set_leader(args.get("self_address"), args.get("partner_addresses"))
         else:
             try:
 

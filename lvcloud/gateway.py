@@ -30,7 +30,6 @@ partition and update the partitions. This would need us to implement moving data
 
 """
 import logging
-from functools import partial
 from http.server import HTTPServer
 
 from lvcloud.gateway_request_handler import GatewayRequestHandler
@@ -39,9 +38,9 @@ from lvcloud.gateway_request_handler import GatewayRequestHandler
 class Gateway:
     httpd = None
 
-    def __init__(self, lb_leader, port=8000, server_class=HTTPServer, handler_class=GatewayRequestHandler, ):
+    def __init__(self, leader_addr, others_addr, port=8000, server_class=HTTPServer, handler_class=GatewayRequestHandler):
         server_address = ('', port)
-        handler = handler_class(lb_leader)
+        handler = handler_class(leader_addr, others_addr)
         self.httpd = server_class(server_address, handler)
 
     def run(self):
