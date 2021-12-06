@@ -25,6 +25,15 @@ def get(node, key, sync=False):
     return requests.get(node, params=msg)
 
 
+def lock(node, lock_type, key, sync=True):
+    msg = {
+        "type": lock_type,
+        "key": key,
+        "sync": sync
+    }
+    return requests.post(node, params=msg)
+
+
 def main():
     while True:
         try:
@@ -36,6 +45,8 @@ def main():
                 result = post("http://localhost:8000", cmd[1], cmd[2])
             elif cmd[0] == 'get':
                 result = get("http://localhost:8000", cmd[1])
+            elif cmd[0] == 'lock' or cmd[0] == 'unlock':
+                result = lock("http://localhost:8000", cmd[0], cmd[1])
             else:
                 print('Wrong command!')
                 continue

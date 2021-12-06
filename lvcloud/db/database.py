@@ -2,6 +2,11 @@ import logging
 
 import requests
 from pysyncobj import replicated, SyncObjConf, SyncObj
+from pysyncobj.batteries import ReplLockManager
+
+
+def get_fail_callback(self, data):
+    logging.error("callback for get. the failure was %s", data)
 
 
 class Database(SyncObj):
@@ -14,15 +19,15 @@ class Database(SyncObj):
         self.__data = {}
 
     @replicated
-    def set(self, key, value):
+    def set(self, key, value, sync=True):
         self.__data[key] = value
 
     @replicated
     def pop(self, key):
         self.__data.pop(key, None)
 
-    # @replicated
-    def get(self, key):
+    @replicated
+    def get(self, key, callback=get_fail_callback, timeout=20, sync=True):
         return self.__data.get(key, None)
 
     # TODO: Updating leader takes too much time and causes too many re-elections. Make it async?
@@ -61,7 +66,7 @@ class Database(SyncObj):
         except Exception as e:
             logging.error("Encountered error getting data: %s", e)
 
-    def do_POST(self, args, lb):
+    def do_POST(self, args, lb, lock_manager: ReplLockManager):
         request_type = args["type"][0]
         try:
             if request_type == "set":
@@ -74,6 +79,25 @@ class Database(SyncObj):
 
                 # TODO: Do exception handling and return status code based on that
                 return 201
+            elif request_type == "lock":
+                key = args['key'][0]
+
+                # TODO: Wait till you get the lock using a queue
+                logging.info(f"Trying to lock key: {key}")
+                result = lock_manager.tryAcquire(key, sync=True, timeout=10)
+                if result:
+                    return 202
+                else:
+                    return 409
+            elif request_type == "unlock":
+                key = args['key'][0]
+
+                logging.info(f"Trying to unlock key: {key}")
+                result = lock_manager.release(key, sync=True)
+                if result:
+                    return 202
+                else:
+                    return 409
             else:
                 logging.error(f"Invalid request type: {request_type}")
                 return 400
