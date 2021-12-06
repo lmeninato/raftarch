@@ -31,6 +31,8 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
             cluster = self.get_cluster(args['key'][0])
             # Forward request to gateway to the db.
             leader = self.get_node_server(cluster[0])
+                            
+            logging.info(f"Making request to: {leader}")
             resp = requests.get(leader, params=args)
             self.send_headers(resp.status_code)
             self.wfile.write(resp.content)
@@ -43,6 +45,9 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def update_cluster_leader(self, leader):
+        leader = leader[7:] # strip http://
+        node, port = leader.split(":")
+        leader = node + ":" + str(int(port)-100)
         for cluster in self.clusters:
             if leader in cluster:
                 index = cluster.index(leader)
@@ -57,17 +62,16 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         request_type = args["type"][0]
 
         try:
-
-
             if request_type == "update_leader":
                 new_leader = args.get("address")[0]
                 logging.info(f"Received new leader address: {new_leader}")
-                self.update_leader(new_leader)
+                self.update_cluster_leader(new_leader)
                 self.send_headers(201)
             else:
                 cluster = self.get_cluster(args['key'][0])
                 leader = self.get_node_server(cluster[0])
                 # Forward request to gateway to the db.
+                logging.info(f"Making request to: {leader}")
                 resp = requests.post(leader, params=args)
                 self.send_headers(resp.status_code)
 

@@ -31,9 +31,9 @@ procs = []
 
 for cluster in clusters:
     for node in cluster:
-        logging.info(f'Starting up node: {node}')
         process = subprocess.Popen(['python3', 'launch_db_node.py', node] + [j for j in cluster if j != node],
                                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=0)
+        logging.info(f'Starting up node: {node} with process id: {process.pid}')
         procs.append(process)
 
 gateway = Gateway(clusters, port = 8000)
