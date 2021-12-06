@@ -2,6 +2,8 @@ import logging
 
 import requests
 
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S', level=logging.DEBUG)
 
 def set_key(node, key, value, sync=False):
     return requests.post(node, params={key: [value, sync]})

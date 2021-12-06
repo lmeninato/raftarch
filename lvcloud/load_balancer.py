@@ -1,11 +1,14 @@
+import logging
+
 import requests
 from pysyncobj import replicated, SyncObjConf, SyncObj
-from pysyncobj.node import TCPNode
 
 
-def update_leader(node, self_address, partner_addresses, sync=False):
-    return requests.post(node, params={"type": "update_leader", "self_address": self_address,
-                                       "partner_addresses": partner_addresses})
+def update_leader(node, self_address):
+    req = {"type": "update_leader", "self_address": self_address}
+    res = requests.post(node, params=req)
+    logging.info("Sent request to update leader")
+    return res
 
 
 class LoadBalancer(SyncObj):
@@ -28,6 +31,36 @@ class LoadBalancer(SyncObj):
         return self.__data.get(key, None)
 
     # TODO: Make it work
-    def __onBecomeLeader(self):
-        update_leader("http://localhost:8000", self.selfNode.__address, [node.__address for node in self.otherNodes])
-        super(LoadBalancer, self).__onBecomeLeader()
+    # def _onBecomeLeader(self):
+    #     super(LoadBalancer, self)._onBecomeLeader()
+    #     update_leader("http://localhost:8000", "http://" + self.selfNode.host + ":" + str(self.selfNode.port+100))
+
+    def do_GET(self, args, lb):
+        key = args['key'][0]
+        logging.info(f'Getting key: {key}')
+
+        try:
+            value = lb.get(key)
+
+            if value is None:
+                return 404, None
+            else:
+                return 200, value.encode('utf-8')
+        except Exception as e:
+            logging.error("Encountered error getting data: %s", e)
+
+    def do_POST(self, args, lb):
+        try:
+            for key, value in args.items():
+                val = value[0]
+                sync = False
+                if len(value) == 2:
+                    sync = value[1]
+                logging.info(f"setting key: {key} and value: {val} with sync: {sync}")
+
+                lb.set(key, val, sync=True)
+
+            return 201
+        except Exception as e:
+            logging.error("Encountered error getting data: %s", e)
+            return 400

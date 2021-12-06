@@ -5,15 +5,24 @@ from http.server import BaseHTTPRequestHandler
 
 
 # Also contains most of the state for gateway since that'll get update by requests etc.
+import requests
+
 from lvcloud.load_balancer import LoadBalancer
 
 
-class GatewayRequestHandler(BaseHTTPRequestHandler):
-    lb = None
+def set_key(node, args):
+    return requests.post(node, params=args)
 
-    def __init__(self, leader_addr, others_addr):
-        self.set_leader(leader_addr, others_addr)
-        # super().__init__(*args, **kwargs)
+
+def get_key_value(node, args):
+    return requests.get(node, params=args)
+
+
+class GatewayRequestHandler(BaseHTTPRequestHandler):
+    lb_leader = None
+
+    def __init__(self, leader_addr):
+        self.lb_leader = leader_addr
 
     def __call__(self, *args, **kwargs):
         """ Handle a request """
@@ -23,27 +32,22 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         args = urllib.parse.parse_qs(self.path[2:])
         logging.info("Gateway received request with args: %s", args)
 
-        key = args['key'][0]
-        logging.info(f'Getting key: {key}')
+        # if "type" in args.keys():
+        #     logging.info("Setting leader lb to: %s", args.get("self_address"))
+        #     self.lb_leader = args.get("self_address")
+        #     self.send_headers(201)
+        #     return
 
-        try:
-            value = self.lb.get(key)
+        resp = get_key_value(self.lb_leader, args)
 
-            if value is None:
-                self.send_headers(404)
-            else:
-                self.send_headers(200)
-                self.wfile.write(value.encode('utf-8'))
-        except Exception as e:
-            logging.error("Encountered error getting data: %s", e)
+        self.send_headers(resp.status_code)
+        self.wfile.write(resp.content)
 
     def send_headers(self, value: int) -> None:
         self.send_response(value)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
 
-    def set_leader(self, leader_addr, others_addr):
-        self.lb = LoadBalancer(leader_addr, others_addr)
 
     def do_POST(self):
         args = urllib.parse.parse_qs(self.path[2:])
@@ -51,19 +55,12 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
 
         if "type" in args.keys():
             logging.info("Setting leader lb to: %s", args.get("self_address"))
-            self.set_leader(args.get("self_address"), args.get("partner_addresses"))
+            self.lb_leader = args.get("self_address")[0]
+            self.send_headers(201)
         else:
             try:
+                resp = set_key(self.lb_leader, args)
 
-                for key, value in args.items():
-                    val = value[0]
-                    sync = False
-                    if len(value) == 2:
-                        sync = value[1]
-                    logging.info(f"setting key: {key} and value: {val} with sync: {sync}")
-
-                    self.lb.set(key, val, sync=True)
-
-                self.send_headers(201)
+                self.send_headers(resp.status_code)
             except Exception as e:
                 logging.error("Encountered error getting data: %s", e)

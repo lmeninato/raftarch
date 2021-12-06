@@ -38,9 +38,9 @@ from lvcloud.gateway_request_handler import GatewayRequestHandler
 class Gateway:
     httpd = None
 
-    def __init__(self, leader_addr, others_addr, port=8000, server_class=HTTPServer, handler_class=GatewayRequestHandler):
+    def __init__(self, leader_addr, port=8000, server_class=HTTPServer, handler_class=GatewayRequestHandler):
         server_address = ('', port)
-        handler = handler_class(leader_addr, others_addr)
+        handler = handler_class(leader_addr)
         self.httpd = server_class(server_address, handler)
 
     def run(self):
