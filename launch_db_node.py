@@ -1,8 +1,11 @@
 import sys
+import logging
 
 from lvcloud.db.database import Database
 from lvcloud.lib.server import Server
 
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S', level=logging.INFO)
 
 def main():
     self_addr = sys.argv[1]
