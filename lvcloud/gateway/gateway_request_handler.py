@@ -21,7 +21,7 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         request_type = args["type"][0]
 
         try:
-            # Forward request to gateway to the load balancer.
+            # Forward request to gateway to the db.
             resp = requests.get(self.lb_leader, params=args)
             self.send_headers(resp.status_code)
             self.wfile.write(resp.content)
@@ -42,10 +42,10 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         try:
             if request_type == "update_leader":
                 self.lb_leader = args.get("address")[0]
-                logging.info("Setting leader lb to: %s", self.lb_leader)
+                logging.info("Setting leader db to: %s", self.lb_leader)
                 self.send_headers(201)
             else:
-                # Forward request to gateway to the load balancer.
+                # Forward request to gateway to the db.
                 resp = requests.post(self.lb_leader, params=args)
                 self.send_headers(resp.status_code)
 

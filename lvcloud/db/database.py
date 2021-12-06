@@ -4,12 +4,12 @@ import requests
 from pysyncobj import replicated, SyncObjConf, SyncObj
 
 
-class LoadBalancer(SyncObj):
+class Database(SyncObj):
     gateway_addr = None
 
     def __init__(self, gateway_addr, self_address, partner_addresses):
         cfg = SyncObjConf(dynamicMembershipChange=True)
-        super(LoadBalancer, self).__init__(self_address, partner_addresses, cfg)
+        super(Database, self).__init__(self_address, partner_addresses, cfg)
         self.gateway_addr = gateway_addr
         self.__data = {}
 
@@ -26,12 +26,12 @@ class LoadBalancer(SyncObj):
         return self.__data.get(key, None)
 
     # TODO: Updating leader takes too much time and causes too many re-elections. Make it async?
-    # def _onBecomeLeader(self):
-    #     super(LoadBalancer, self)._onBecomeLeader()
-    #     self.update_leader()
+    def _onBecomeLeader(self):
+        super(Database, self)._onBecomeLeader()
+        self.update_leader()
 
     def update_leader(self):
-        logging.info("Sending request to update LB leader info at Gateway")
+        logging.info("Sending request to update DB leader info at Gateway")
 
         address = "http://" + self.selfNode.host + ":" + str(self.selfNode.port + 100)
         msg = {
