@@ -26,7 +26,7 @@ class LoadBalancer(SyncObj):
         self.__data.pop(key, None)
 
     # if @replicated -> then we guarantee strong consistentency
-    @replicated
+    # @replicated
     def get(self, key):
         return self.__data.get(key, None)
 

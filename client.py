@@ -33,9 +33,9 @@ def main():
             elif result.status_code == 201:
                 print("Done!")
             elif result.status_code == 404:
-                print(f"Key: {cmd[1]} not found!")
+                print("Key: {cmd[1]} not found!")
             else:
-                print(f"Error looking up key: {cmd[1]}")
+                print("Error looking up key: {cmd[1]}")
 
         except Exception as e:
             logging.error("Encountered an error: %s", e)
