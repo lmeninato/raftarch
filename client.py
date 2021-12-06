@@ -2,13 +2,27 @@ import logging
 
 import requests
 
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S', level=logging.INFO)
 
-def set_key(node, key, value, sync=False):
-    return requests.post(node, params={key: [value, sync]})
+
+def post(node, key, value, sync=False):
+    msg = {
+        "type": "set",
+        "key": key,
+        "value": value,
+        "sync": sync
+    }
+    return requests.post(node, params=msg)
 
 
-def get_key_value(node, key):
-    return requests.get(node, params={'key': key})
+def get(node, key, sync=False):
+    msg = {
+        "type": "get",
+        "key": key,
+        "sync": sync
+    }
+    return requests.get(node, params=msg)
 
 
 def main():
@@ -19,9 +33,9 @@ def main():
             if not cmd:
                 continue
             elif cmd[0] == 'set':
-                result = set_key("http://localhost:8000", cmd[1], cmd[2])
+                result = post("http://localhost:8000", cmd[1], cmd[2])
             elif cmd[0] == 'get':
-                result = get_key_value("http://localhost:8000", cmd[1])
+                result = get("http://localhost:8000", cmd[1])
             else:
                 print('Wrong command!')
                 continue
