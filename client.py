@@ -37,7 +37,8 @@ def main():
             elif cmd[0] == 'get':
                 result = get("http://localhost:8000", cmd[1])
             else:
-                print('Wrong command!')
+                print('Usage: set <key> <value>')
+                print('\t get <key>')
                 continue
 
             if result.status_code == 200:
