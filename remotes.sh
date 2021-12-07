@@ -30,6 +30,12 @@ scp va2083@apt175.apt.emulab.net:~/no_failure.csv benchmarks_remote/
 ssh va2083@apt175.apt.emulab.net "python3 raftarch/leader_failure.py"
 scp va2083@apt175.apt.emulab.net:~/results_leader_failure.csv benchmarks_remote/
 
+
+# 2 clusters
+
+ssh va2083@apt175.apt.emulab.net "python3 raftarch/remote_gateway.py 2"
+
+
 ssh va2083@apt166.apt.emulab.net "python3 raftarch/launch_db_node.py http://10.10.1.4:8000 10.10.1.1:5001 10.10.1.2:5001 10.10.1.3:5001 &"
 ssh va2083@apt187.apt.emulab.net "python3 raftarch/launch_db_node.py http://10.10.1.4:8000 10.10.1.2:5001 10.10.1.1:5001 10.10.1.3:5001 &"
 ssh va2083@apt184.apt.emulab.net "python3 raftarch/launch_db_node.py http://10.10.1.4:8000 10.10.1.3:5001 10.10.1.1:5001 10.10.1.2:5001 &"
