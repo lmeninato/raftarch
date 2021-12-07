@@ -1,13 +1,18 @@
+import os
 import sys
+import logging
 
 from lvcloud.db.database import Database
 from lvcloud.lib.server import Server
+
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S', level=logging.DEBUG)
 
 
 def main():
     self_addr = sys.argv[1]
     other_addrs = sys.argv[2:]
-
+    logging.info(f"My pid in launch lb is {os.getpid()}")
     # start server at 100+port
     port = int(self_addr.split(":")[1]) + 100
 

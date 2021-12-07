@@ -1,4 +1,6 @@
 import logging
+import os
+import time
 
 import requests
 from pysyncobj import replicated, SyncObjConf, SyncObj
@@ -12,23 +14,51 @@ def get_fail_callback(self, data):
 class Database(SyncObj):
     gateway_addr = None
 
-    def __init__(self, gateway_addr, self_address, partner_addresses):
+    def __init__(self, gateway_addr, self_address, partner_addresses, auto_unlock_time=30):
         cfg = SyncObjConf(dynamicMembershipChange=True)
         super(Database, self).__init__(self_address, partner_addresses, cfg)
+        logging.info(f"My pid in db is {os.getpid()}")
         self.gateway_addr = gateway_addr
         self.__data = {}
+        self.__locks = {}
+        self.__auto_unlock_time = auto_unlock_time
 
     @replicated
-    def set(self, key, value, sync=True):
+    def set(self, key, value):
         self.__data[key] = value
 
     @replicated
-    def pop(self, key):
-        self.__data.pop(key, None)
+    def lock(self, key, value):
+        self.__locks[key] = value
 
     @replicated
-    def get(self, key, callback=get_fail_callback, timeout=20, sync=True):
+    def pop(self, key, sync=True):
+        self.__data.pop(key, None)
+
+    # @replicated
+    def get(self, key):
         return self.__data.get(key, None)
+
+    def acquire(self, lock_id, client_id, current_time):
+        existing_lock = self.__locks.get(lock_id, None)
+        logging.info(f"trying to lock {lock_id} and got the value {existing_lock}")
+        # Auto-unlock old lock
+        if existing_lock is not None:
+            if current_time - existing_lock[1] > self.__auto_unlock_time:
+                logging.info(f"setting lock as None since diff is {current_time - existing_lock[1]} vs "
+                             f"the unlock time {self.__auto_unlock_time}")
+                existing_lock = None
+        # Acquire lock if possible
+        if existing_lock is None:
+            self.lock(lock_id, (client_id, current_time))
+            return True
+        # Lock already acquired by someone else
+        return False
+
+    def release(self, lock_id, client_id):
+        existing_lock = self.__locks.get(lock_id, None)
+        if existing_lock is not None:
+            self.lock(lock_id, None)
 
     # TODO: Updating leader takes too much time and causes too many re-elections. Make it async?
     def _onBecomeLeader(self):
@@ -80,11 +110,13 @@ class Database(SyncObj):
                 # TODO: Do exception handling and return status code based on that
                 return 201
             elif request_type == "lock":
-                key = args['key'][0]
+                attempt_time = time.time()
 
-                # TODO: Wait till you get the lock using a queue
+                key = args['key'][0]
                 logging.info(f"Trying to lock key: {key}")
-                result = lock_manager.tryAcquire(key, sync=True, timeout=10)
+                # TODO: Wait till you get the lock using a queue
+                result = self.acquire(key, 0, attempt_time)
+
                 if result:
                     return 202
                 else:
@@ -93,11 +125,8 @@ class Database(SyncObj):
                 key = args['key'][0]
 
                 logging.info(f"Trying to unlock key: {key}")
-                result = lock_manager.release(key, sync=True)
-                if result:
-                    return 202
-                else:
-                    return 409
+                self.release(key, 0)
+                return 202
             else:
                 logging.error(f"Invalid request type: {request_type}")
                 return 400

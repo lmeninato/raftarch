@@ -53,10 +53,12 @@ def main():
 
             if result.status_code == 200:
                 print(result.text)
-            elif result.status_code == 201:
+            elif result.status_code == 201 or result.status_code == 202:
                 print("Done!")
             elif result.status_code == 404:
                 print(f"Key: {cmd[1]} not found!")
+            elif result.status_code == 409:
+                print(f"Unable to lock {cmd[1]}!")
             else:
                 print(f"Error looking up key: {cmd[1]}")
 
