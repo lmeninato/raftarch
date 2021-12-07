@@ -48,7 +48,8 @@ def main():
             elif cmd[0] == 'lock' or cmd[0] == 'unlock':
                 result = lock("http://localhost:8000", cmd[0], cmd[1])
             else:
-                print('Wrong command!')
+                print('Usage: set <key> <value>')
+                print('\t get <key>')
                 continue
 
             if result.status_code == 200:
