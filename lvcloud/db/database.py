@@ -96,7 +96,7 @@ class Database(SyncObj):
         except Exception as e:
             logging.error("Encountered error getting data: %s", e)
 
-    def do_POST(self, args, lb, lock_manager: ReplLockManager):
+    def do_POST(self, args, lb):
         request_type = args["type"][0]
         try:
             if request_type == "set":

@@ -34,10 +34,34 @@ def lock(node, lock_type, key, sync=True):
     return requests.post(node, params=msg)
 
 
+def txn(node, commands):
+    data = []
+    for cmd in commands:
+        data.append(cmd.strip())
+        # tokens = cmd.strip().split()
+        # msg = {
+        #     "type": tokens[0],
+        #     "key": tokens[1],
+        #     "sync": False
+        # }
+        #
+        # if tokens[0] == 'set':
+        #     msg["value"] = tokens[2]
+        # data.append(msg)
+
+    msg = {
+        "type": "transaction",
+        "commands": data
+    }
+
+    return requests.post(node, params=msg)
+
+
 def main():
     while True:
         try:
-            cmd = input(">> ").split()
+            inp = input(">> ")
+            cmd = inp.split()
 
             if not cmd:
                 continue
@@ -47,6 +71,10 @@ def main():
                 result = get("http://localhost:8000", cmd[1])
             elif cmd[0] == 'lock' or cmd[0] == 'unlock':
                 result = lock("http://localhost:8000", cmd[0], cmd[1])
+            elif cmd[0] == 'txn;':
+                raw_comm = list(filter(None, inp.split(";")))
+
+                result = txn("http://localhost:8000", raw_comm[1:])
             else:
                 print('Usage: set <key> <value>')
                 print('\t get <key>')
