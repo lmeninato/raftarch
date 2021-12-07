@@ -48,6 +48,7 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
         leader = leader[7:] # strip http://
         node, port = leader.split(":")
         leader = node + ":" + str(int(port)-100)
+        logging.info(f"clusters are: {self.clusters}, leader is: {leader}")
         for cluster in self.clusters:
             if leader in cluster:
                 index = cluster.index(leader)
