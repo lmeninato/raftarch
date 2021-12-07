@@ -36,25 +36,16 @@ def lock(node, lock_type, key, sync=True):
 
 def txn(node, commands):
     data = []
-    for cmd in commands:
+    for cmd in commands[1:]:
         data.append(cmd.strip())
-        # tokens = cmd.strip().split()
-        # msg = {
-        #     "type": tokens[0],
-        #     "key": tokens[1],
-        #     "sync": False
-        # }
-        #
-        # if tokens[0] == 'set':
-        #     msg["value"] = tokens[2]
-        # data.append(msg)
 
     msg = {
         "type": "transaction",
+        "client_id": commands[0].split()[1],
         "commands": data
     }
 
-    return requests.post(node, params=msg)
+    return requests.get(node, params=msg)
 
 
 def main():
@@ -63,22 +54,32 @@ def main():
             inp = input(">> ")
             cmd = inp.split()
 
-            if not cmd:
-                continue
-            elif cmd[0] == 'set':
-                result = post("http://localhost:8000", cmd[1], cmd[2])
-            elif cmd[0] == 'get':
-                result = get("http://localhost:8000", cmd[1])
-            elif cmd[0] == 'lock' or cmd[0] == 'unlock':
-                result = lock("http://localhost:8000", cmd[0], cmd[1])
-            elif cmd[0] == 'txn;':
-                raw_comm = list(filter(None, inp.split(";")))
-
-                result = txn("http://localhost:8000", raw_comm[1:])
+            args = []
+            if ';' in inp:
+                args.extend(list(filter(None, inp.split(";"))))
             else:
-                print('Usage: set <key> <value>')
-                print('\t get <key>')
-                continue
+                args.append('txn 0')
+                args.append(inp)
+
+            result = txn("http://localhost:8000", args)
+
+            #
+            # if not cmd:
+            #     continue
+            # elif cmd[0] == 'set':
+            #     result = post("http://localhost:8000", cmd[1], cmd[2])
+            # elif cmd[0] == 'get':
+            #     result = get("http://localhost:8000", cmd[1])
+            # elif cmd[0] == 'lock' or cmd[0] == 'unlock':
+            #     result = lock("http://localhost:8000", cmd[0], cmd[1])
+            # elif cmd[0] == 'txn':
+            #     raw_comm = list(filter(None, inp.split(";")))
+            #
+            #     result = txn("http://localhost:8000", raw_comm[1:])
+            # else:
+            #     print('Usage: set <key> <value>')
+            #     print('\t get <key>')
+            #     continue
 
             if result.status_code == 200:
                 print(result.text)

@@ -28,5 +28,5 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         args = urllib.parse.parse_qs(self.path[2:])
-        status_code = self.raft_node.do_POST(args, self.raft_node)
-        self.send_headers(status_code)
+        resp = self.raft_node.do_POST(args, self.raft_node)
+        self.send_headers(resp[0])
