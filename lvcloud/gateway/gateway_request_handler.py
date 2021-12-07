@@ -68,6 +68,32 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                 logging.info(f"Received new leader address: {new_leader}")
                 self.update_cluster_leader(new_leader)
                 self.send_headers(201)
+            elif request_type == "transaction":
+                commands = args.get("commands")
+                logging.info(f"Received a transaction with commands: {commands}")
+
+                resp = None
+                for command in commands:
+                    tokens = command.split()
+                    cmd_type = tokens[0]
+                    key = tokens[1]
+                    msg = {
+                        "type": tokens[0],
+                        "key": tokens[1],
+                        "sync": False
+                    }
+
+                    if tokens[0] == 'set':
+                        msg["value"] = tokens[2]
+
+                    cluster = self.get_cluster(key)
+                    leader = self.get_node_server(cluster[0])
+                    # Forward request to gateway to the db.
+                    logging.info(f"Making request to: {leader}")
+                    resp = requests.post(leader, params=msg)
+                    if resp.status_code >= 400:
+                        break
+                self.send_headers(resp.status_code)
             else:
                 cluster = self.get_cluster(args['key'][0])
                 leader = self.get_node_server(cluster[0])

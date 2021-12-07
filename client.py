@@ -25,10 +25,43 @@ def get(node, key, sync=False):
     return requests.get(node, params=msg)
 
 
+def lock(node, lock_type, key, sync=True):
+    msg = {
+        "type": lock_type,
+        "key": key,
+        "sync": sync
+    }
+    return requests.post(node, params=msg)
+
+
+def txn(node, commands):
+    data = []
+    for cmd in commands:
+        data.append(cmd.strip())
+        # tokens = cmd.strip().split()
+        # msg = {
+        #     "type": tokens[0],
+        #     "key": tokens[1],
+        #     "sync": False
+        # }
+        #
+        # if tokens[0] == 'set':
+        #     msg["value"] = tokens[2]
+        # data.append(msg)
+
+    msg = {
+        "type": "transaction",
+        "commands": data
+    }
+
+    return requests.post(node, params=msg)
+
+
 def main():
     while True:
         try:
-            cmd = input(">> ").split()
+            inp = input(">> ")
+            cmd = inp.split()
 
             if not cmd:
                 continue
@@ -36,6 +69,12 @@ def main():
                 result = post("http://localhost:8000", cmd[1], cmd[2])
             elif cmd[0] == 'get':
                 result = get("http://localhost:8000", cmd[1])
+            elif cmd[0] == 'lock' or cmd[0] == 'unlock':
+                result = lock("http://localhost:8000", cmd[0], cmd[1])
+            elif cmd[0] == 'txn;':
+                raw_comm = list(filter(None, inp.split(";")))
+
+                result = txn("http://localhost:8000", raw_comm[1:])
             else:
                 print('Usage: set <key> <value>')
                 print('\t get <key>')
@@ -43,10 +82,12 @@ def main():
 
             if result.status_code == 200:
                 print(result.text)
-            elif result.status_code == 201:
+            elif result.status_code == 201 or result.status_code == 202:
                 print("Done!")
             elif result.status_code == 404:
                 print(f"Key: {cmd[1]} not found!")
+            elif result.status_code == 409:
+                print(f"Unable to lock {cmd[1]}!")
             else:
                 print(f"Error looking up key: {cmd[1]}")
 
