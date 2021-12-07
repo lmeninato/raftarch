@@ -7,9 +7,9 @@ from lvcloud.lib.request_handler import RequestHandler
 class Server:
     httpd = None
 
-    def __init__(self, self_addr, others_addr, port, raft_class, server_class=HTTPServer):
+    def __init__(self, self_addr, others_addr, port, raft_class, server_class=HTTPServer, gateway_addr='http://localhost:8000'):
         server_address = ('', port)
-        handler = RequestHandler(self_addr, others_addr, raft_class)
+        handler = RequestHandler(self_addr, others_addr, raft_class, gateway_addr)
         self.httpd = server_class(server_address, handler)
 
     def run(self):

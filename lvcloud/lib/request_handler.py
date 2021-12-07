@@ -7,9 +7,9 @@ from http.server import BaseHTTPRequestHandler
 class RequestHandler(BaseHTTPRequestHandler):
     raft_node = None
 
-    def __init__(self, self_addr, others_addr, raft_class):
+    def __init__(self, self_addr, others_addr, raft_class, gateway_addr='http://localhost:8000'):
         # TODO: Remove hard coded gateway addr
-        self.raft_node = raft_class("http://localhost:8000", self_addr, others_addr)
+        self.raft_node = raft_class(gateway_addr, self_addr, others_addr)
 
     def __call__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
