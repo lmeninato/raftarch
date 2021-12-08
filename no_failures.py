@@ -5,7 +5,7 @@ import subprocess
 from time import time
 
 from lvcloud.gateway.gateway import Gateway
-from client import post, get
+from client import txn
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d:%H:%M:%S', level=logging.INFO)
@@ -73,7 +73,7 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
         if random.randint(0, 1):
             # set
             try:
-                post(gateway, rand_key, kv_pairs[rand_key])
+                txn(gateway, ['txn 0', f'set {rand_key} {kv_pairs[rand_key]}'])
                 res = 'set'
             except:
                 errors += 1
@@ -81,7 +81,7 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
         else:
             # get
             try:
-                get(gateway, rand_key)
+                txn(gateway, ['txn 0', f'get {rand_key}'])
                 res = 'get'
             except:
                 errors += 1

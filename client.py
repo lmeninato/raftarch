@@ -60,7 +60,6 @@ def main():
             else:
                 args.append('txn 0')
                 args.append(inp)
-
             result = txn("http://localhost:8000", args)
 
             #
