@@ -3,9 +3,10 @@ import urllib.parse
 import requests
 
 from http.server import BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 
 
-class GatewayRequestHandler(BaseHTTPRequestHandler):
+class BaseGatewayRequestHandler(BaseHTTPRequestHandler):
     clusters = None
 
     def __init__(self, clusters, port_offset=100):
@@ -116,3 +117,9 @@ class GatewayRequestHandler(BaseHTTPRequestHandler):
                 break
         self.send_headers(resp.status_code)
         self.wfile.write(resp.content)
+
+class GatewayRequestHandler(ThreadingMixIn, BaseGatewayRequestHandler):
+    '''
+    ThreadingMixIn makes the gateway multithreaded
+    '''
+    pass

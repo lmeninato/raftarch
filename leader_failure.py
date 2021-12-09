@@ -1,7 +1,9 @@
 import logging
 import random
 import subprocess
+import sys
 
+import concurrent.futures
 from time import time
 
 from lvcloud.gateway.gateway import Gateway
@@ -92,7 +94,11 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
     print('requests: {}, sets: {}, gets: {}, errors: {}'.format(requests, sets, gets, errors))
     return requests_over_time
 
-def results_to_csv(reqs):
+def results_to_csv(reqs, thread_id=None):
+    if thread_id is None:
+        file_out = 'results_leader_failure.csv'
+    else:
+        file_out = f'results_leader_failure_thread_{thread_id}.csv'
     with open('results_leader_failure.csv', 'w+') as f:
         f.write("time,command\n")
         for req in reqs:
@@ -101,5 +107,18 @@ def results_to_csv(reqs):
 
 if __name__ == "__main__":
     kv_pairs = build_random_keys()
-    requests_over_time = run_simulation(kv_pairs)
-    results_to_csv(requests_over_time)
+
+    if len(sys.argv) > 1:
+        # multithreading is OK since work is IO-bound, not CPU-bound
+        
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            print("Using multithreaded benchmarks with 2 threads")
+            future1 = executor.submit(run_simulation, kv_pairs)
+            future2 = executor.submit(run_simulation, kv_pairs)
+
+            requests_over_time1 = future1.result()
+            requests_over_time2 = future2.result()
+            results_to_csv(requests_over_time1 + requests_over_time2, 2)
+    else:
+        requests_over_time = run_simulation(kv_pairs)
+        results_to_csv(requests_over_time)
