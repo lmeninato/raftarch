@@ -75,10 +75,16 @@ ssh va2083@apt187.apt.emulab.net "python3 raftarch/launch_db_node.py http://10.1
 ssh va2083@apt184.apt.emulab.net "python3 raftarch/launch_db_node.py http://10.10.1.4:8000 10.10.1.3:5002 10.10.1.1:5002 10.10.1.2:5002 &"
 
 # benchmark no failures
+ssh va2083@apt175.apt.emulab.net "python3 raftarch/benchmarks.py"
+scp va2083@apt175.apt.emulab.net:~/benchmarks.csv benchmarks_remote/with_txn_no_failure_2_clusters.csv
+
 ssh va2083@apt175.apt.emulab.net "python3 raftarch/benchmarks.py 2"
-scp va2083@apt175.apt.emulab.net:~/benchmarks_threaded_2.csv benchmarks_remote/with_txn_no_failure_2_clusters.csv
+scp va2083@apt175.apt.emulab.net:~/benchmarks_threaded_2.csv benchmarks_remote/multithreaded_with_txn_no_failure_2_clusters.csv
 
 # benchmark with failures (including leader) at 10s (with 2 threads)
+ssh va2083@apt175.apt.emulab.net "python3 raftarch/benchmarks.py"
+scp va2083@apt175.apt.emulab.net:~/benchmarks.csv benchmarks_remote/with_txn_leader_failure_2_clusters.csv
+
 ssh va2083@apt175.apt.emulab.net "python3 raftarch/benchmarks.py 2"
-scp va2083@apt175.apt.emulab.net:~/benchmarks_threaded_2.csv benchmarks_remote/with_txn_leader_failure_2_clusters.csv
+scp va2083@apt175.apt.emulab.net:~/benchmarks_threaded_2.csv benchmarks_remote/multithreaded_with_txn_leader_failure_2_clusters.csv
 
