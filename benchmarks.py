@@ -99,7 +99,7 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
 
 
 def generate_random_requests(kv_pairs, n=10000):
-    keys = kv_pairs.keys()
+    keys = list(kv_pairs.keys())
     request_list = []
     for i in range(n):
         rand_key = random.choice(keys)
@@ -130,16 +130,16 @@ def results_to_csv(reqs, thread_id=None):
 if __name__ == "__main__":
     gateway = "http://localhost:8000"
     kv_pairs = build_random_keys()
-    requests = generate_random_requests(kv_pairs, 10000)
+    requests = generate_random_requests(kv_pairs, 1000)
     print('warming up db..')
 
-    for k, v in kv_pairs:
+    for k, v in kv_pairs.items():
         txn(gateway, ['txn 0', f'set {k} {v}'])
 
     print('db warmed up.')
 
     cpus = multiprocessing.cpu_count()
-    print('using {} cpus', cpus)
+    print(f'using {cpus} cpus')
 
     if len(sys.argv) > 1:
         # multithreading is OK since work is IO-bound, not CPU-bound
