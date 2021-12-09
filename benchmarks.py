@@ -96,10 +96,10 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
 
 def results_to_csv(reqs, thread_id=None):
     if thread_id is None:
-        file_out = 'results_leader_failure.csv'
+        file_out = 'benchmarks.csv'
     else:
-        file_out = f'results_leader_failure_thread_{thread_id}.csv'
-    with open('results_leader_failure.csv', 'w+') as f:
+        file_out = f'benchmarks_threaded_{thread_id}.csv'
+    with open(file_out, 'w+') as f:
         f.write("time,command\n")
         for req in reqs:
             ts, cmd = req
