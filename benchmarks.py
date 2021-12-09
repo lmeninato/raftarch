@@ -1,4 +1,5 @@
 import logging
+import multiprocessing
 import random
 import subprocess
 import sys
@@ -9,8 +10,10 @@ from time import time
 from lvcloud.gateway.gateway import Gateway
 from client import txn
 
+
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d:%H:%M:%S', level=logging.INFO)
+
 
 def generate_local_clusters(n, k=3):
     '''
@@ -94,6 +97,24 @@ def run_simulation(kv_pairs, gateway = "http://localhost:8000"):
     print('requests: {}, sets: {}, gets: {}, errors: {}'.format(requests, sets, gets, errors))
     return requests_over_time
 
+
+def generate_random_requests(kv_pairs, n=10000):
+    keys = kv_pairs.keys()
+    request_list = []
+    for i in range(n):
+        rand_key = random.choice(keys)
+        if random.randint(0, 1):
+            request_list.append(['txn 0', f'set {rand_key} {kv_pairs[rand_key]}'])
+        else:
+            request_list.append(['txn 0', f'get {rand_key}'])
+    return request_list
+
+
+def send_request(req):
+    txn(gateway, req)
+    return
+
+
 def results_to_csv(reqs, thread_id=None):
     if thread_id is None:
         file_out = 'benchmarks.csv'
@@ -105,20 +126,42 @@ def results_to_csv(reqs, thread_id=None):
             ts, cmd = req
             f.write(f"{ts},{cmd}\n")
 
+
 if __name__ == "__main__":
+    gateway = "http://localhost:8000"
     kv_pairs = build_random_keys()
+    requests = generate_random_requests(kv_pairs, 10000)
+    print('warming up db..')
+
+    for k, v in kv_pairs:
+        txn(gateway, ['txn 0', f'set {k} {v}'])
+
+    print('db warmed up.')
+
+    cpus = multiprocessing.cpu_count()
+    print('using {} cpus', cpus)
 
     if len(sys.argv) > 1:
         # multithreading is OK since work is IO-bound, not CPU-bound
-        
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            print("Using multithreaded benchmarks with 2 threads")
-            future1 = executor.submit(run_simulation, kv_pairs)
-            future2 = executor.submit(run_simulation, kv_pairs)
 
-            requests_over_time1 = future1.result()
-            requests_over_time2 = future2.result()
-            results_to_csv(requests_over_time1 + requests_over_time2, 2)
+        exec_time = 0
+        with multiprocessing.Manager() as manager:
+            start = time()
+            print('start time is {}', start)
+            pool = multiprocessing.Pool(processes=cpus)
+
+            for req in requests:
+                pool.apply_async(send_request, args=(req, ))
+
+            pool.close()
+            pool.join()
+
+            end = time()
+            print('end time is {}', end)
+
+            exec_time = end-start
+            print('exec time is {}', exec_time)
+
     else:
         requests_over_time = run_simulation(kv_pairs)
         results_to_csv(requests_over_time)
